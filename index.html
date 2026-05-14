@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mini Fighter</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    overflow: hidden;
+    font-family: Arial;
+  }
+
+  canvas {
+    display: block;
+    margin: auto;
+    background: #1a1a1a;
+  }
+
+  .ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="ui">
+  <div>Arrows = move</div>
+  <div>Z = attack</div>
+</div>
+
+<canvas id="game" width="800" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// player
+const player = {
+  x: 100,
+  y: 300,
+  w: 30,
+  h: 50,
+  vx: 0,
+  vy: 0,
+  onGround: true,
+  attacking: false
+};
+
+// enemy
+const enemy = {
+  x: 600,
+  y: 300,
+  w: 30,
+  h: 50,
+  hp: 3
+};
+
+const gravity = 0.8;
+let keys = {};
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+function rect(a,b) {
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
+
+function update() {
+
+  // movement
+  if (keys["ArrowLeft"]) player.vx = -4;
+  else if (keys["ArrowRight"]) player.vx = 4;
+  else player.vx = 0;
+
+  // jump
+  if (keys["ArrowUp"] && player.onGround) {
+    player.vy = -12;
+    player.onGround = false;
+  }
+
+  // attack
+  player.attacking = keys["z"] || keys["Z"];
+
+  // physics
+  player.vy += gravity;
+  player.x += player.vx;
+  player.y += player.vy;
+
+  // ground
+  if (player.y >= 300) {
+    player.y = 300;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
+  // enemy AI (walk toward player)
+  if (enemy.x < player.x) enemy.x += 1.5;
+  else enemy.x -= 1.5;
+
+  // attack hit
+  if (player.attacking && rect(player, enemy)) {
+    enemy.hp -= 1;
+  }
+
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // ground
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0,350,800,50);
+
+  // player
+  ctx.fillStyle = player.attacking ? "orange" : "#00ffcc";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // enemy
+  ctx.fillStyle = "red";
+  ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+
+  // hp
+  ctx.fillStyle = "white";
+  ctx.fillText("Enemy HP: " + enemy.hp, 650, 20);
+
+  if (enemy.hp <= 0) {
+    ctx.fillText("ENEMY DOWN", 350, 200);
+  }
+}
+
+setInterval(update, 16);
+</script>
+
+</body>
+</html>
